@@ -1,65 +1,72 @@
-import Image from "next/image";
+import { createClient } from '@/utils/supabase/server'
+import { redirect } from 'next/navigation'
+import AuthenticatedHome from '@/components/AuthenticatedHome'
 
-export default function Home() {
-  return (
-    <div className="flex min-h-screen items-center justify-center bg-zinc-50 font-sans dark:bg-black">
-      <main className="flex min-h-screen w-full max-w-3xl flex-col items-center justify-between py-32 px-16 bg-white dark:bg-black sm:items-start">
-        <Image
-          className="dark:invert"
-          src="/next.svg"
-          alt="Next.js logo"
-          width={100}
-          height={20}
-          priority
-        />
-        <div className="flex flex-col items-center gap-6 text-center sm:items-start sm:text-left">
-          <h1 className="max-w-xs text-3xl font-semibold leading-10 tracking-tight text-black dark:text-zinc-50">
-            To get started, edit the page.js file.
-          </h1>
-          <p className="max-w-md text-lg leading-8 text-zinc-600 dark:text-zinc-400">
-            Looking for a starting point or more instructions? Head over to{" "}
-            <a
-              href="https://vercel.com/templates?framework=next.js&utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
-              className="font-medium text-zinc-950 dark:text-zinc-50"
-            >
-              Templates
-            </a>{" "}
-            or the{" "}
-            <a
-              href="https://nextjs.org/learn?utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
-              className="font-medium text-zinc-950 dark:text-zinc-50"
-            >
-              Learning
-            </a>{" "}
-            center.
-          </p>
-        </div>
-        <div className="flex flex-col gap-4 text-base font-medium sm:flex-row">
-          <a
-            className="flex h-12 w-full items-center justify-center gap-2 rounded-full bg-foreground px-5 text-background transition-colors hover:bg-[#383838] dark:hover:bg-[#ccc] md:w-[158px]"
-            href="https://vercel.com/new?utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
-            target="_blank"
-            rel="noopener noreferrer"
-          >
-            <Image
-              className="dark:invert"
-              src="/vercel.svg"
-              alt="Vercel logomark"
-              width={16}
-              height={16}
-            />
-            Deploy Now
-          </a>
-          <a
-            className="flex h-12 w-full items-center justify-center rounded-full border border-solid border-black/[.08] px-5 transition-colors hover:border-transparent hover:bg-black/[.04] dark:border-white/[.145] dark:hover:bg-[#1a1a1a] md:w-[158px]"
-            href="https://nextjs.org/docs?utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
-            target="_blank"
-            rel="noopener noreferrer"
-          >
-            Documentation
-          </a>
+export default async function Home() {
+  const supabase = await createClient()
+
+  // 1. Get the current user session from the server
+  const { data: { user } } = await supabase.auth.getUser()
+
+  // 2. Server Action to handle Logout
+  async function handleSignOut() {
+    'use server'
+    const supabase = await createClient()
+    await supabase.auth.signOut()
+    redirect('/')
+  }
+
+  // 3. Server Action to handle Login
+  async function handleLogin() {
+    'use server'
+    const supabase = await createClient()
+    
+    // Use http for local development on port 3004 to avoid SSL errors
+    const baseUrl = process.env.VERCEL_URL 
+      ? `http://${process.env.VERCEL_URL}` 
+      : 'http://localhost:3004'
+
+    const { data, error } = await supabase.auth.signInWithOAuth({
+      provider: 'google',
+      options: { 
+        redirectTo: `${baseUrl}/auth/callback` 
+      }
+    })
+
+    if (error) {
+      console.error('Auth error:', error.message)
+      return
+    }
+
+    if (data?.url) {
+      redirect(data.url)
+    }
+  }
+
+  // 4. Conditional Rendering based on Auth State
+  if (!user) {
+    return (
+      <main className="flex flex-col items-center justify-center min-h-screen bg-gray-50">
+        <div className="p-8 bg-white shadow-xl rounded-2xl text-center border border-gray-100">
+          <h1 className="text-4xl font-extrabold mb-2 text-gray-900">Smart Bookmark App</h1>
+          <h1 className="text-4xl font-extrabold mb-2 text-gray-900">Keep</h1>
+          <p className="text-gray-500 mb-8 italic text-sm">Save what matters, instantly.</p>
+          <form action={handleLogin} className="flex justify-center w-full">
+            <button className="flex items-center gap-3 px-8 py-4 border border-gray-200 rounded-xl bg-white hover:bg-gray-50 transition-all shadow-sm hover:shadow-md font-semibold text-gray-700 cursor-pointer disabled:cursor-not-allowed">
+              <img src="https://www.google.com/favicon.ico" alt="Google" className="w-5 h-5" />
+              Sign in with Google
+            </button>
+          </form>
         </div>
       </main>
-    </div>
-  );
+    )
+  }
+
+  // 5. If logged in, show the Authenticated Dashboard
+  return (
+    <AuthenticatedHome 
+      user={user} 
+      handleSignOut={handleSignOut} 
+    />
+  )
 }
