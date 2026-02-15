@@ -28,7 +28,7 @@ export default function AuthenticatedHome({ user, handleSignOut }) {
       <AddBookmark userId={user.id} onAddSuccess={triggerRefresh} />
 
       {/* The key forces a fresh mount whenever refreshKey changes */}
-      <BookmarkList key={refreshKey} />
+      <BookmarkList key={refreshKey} onDeleteSuccess={triggerRefresh} />
     </main>
   )
 }

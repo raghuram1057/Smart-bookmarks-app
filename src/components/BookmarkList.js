@@ -2,7 +2,8 @@
 import { useEffect, useState } from 'react';
 import { createClient } from '@/utils/supabase/client';
 
-export default function BookmarkList() {
+// UPDATE: Add onDeleteSuccess to the props
+export default function BookmarkList({ onDeleteSuccess }) {
   const supabase = createClient();
   const [bookmarks, setBookmarks] = useState([]);
 
@@ -10,7 +11,6 @@ export default function BookmarkList() {
     const { data, error } = await supabase
       .from('bookmarks')
       .select('*')
-      // Changed from created_at to inserted_at to match your DB
       .order('inserted_at', { ascending: false });
     
     if (error) {
@@ -39,7 +39,15 @@ export default function BookmarkList() {
 
   const deleteBookmark = async (id) => {
     const { error } = await supabase.from('bookmarks').delete().eq('id', id);
-    if (error) console.error('Delete error:', error.message);
+    
+    if (error) {
+      console.error('Delete error:', error.message);
+    } else {
+      // UPDATE: Call the refresh function passed from AuthenticatedHome
+      if (onDeleteSuccess) {
+        onDeleteSuccess();
+      }
+    }
   };
 
   if (bookmarks.length === 0) {
