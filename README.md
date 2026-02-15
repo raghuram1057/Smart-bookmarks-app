@@ -73,4 +73,29 @@ Setup Environment Variables: Create a .env file with your NEXT_PUBLIC_SUPABASE_U
 Run Development Server: ```bash
 npm run dev 
 
-Access the app: Open 
+Access the app: Open https://smart-bookmarks-app-amber.vercel.app/
+
+# Smart Bookmark App
+
+A production-ready bookmark manager built with **Next.js 15**, **Supabase**, and **Tailwind CSS**. This app features secure Google OAuth authentication and instant UI updates.
+
+##  Key Features
+* **Google OAuth 2.0:** Secure server-side authentication using Supabase Auth.
+* **Optimistic UI:** Instant "Add" and "Delete" actions that update the interface before the database response for zero-latency user experience.
+* **Realtime Sync:** Automated list updates across devices using Postgres Changes.
+* **Responsive Design:** Fully mobile-responsive UI built with Tailwind CSS.
+
+##  Tech Stack
+* **Frontend:** Next.js (App Router), React, Tailwind CSS.
+* **Backend/Database:** Supabase (PostgreSQL).
+* **Deployment:** Vercel.
+
+##  Technical Implementation Details
+* **Environment-Aware Redirects:** Configured a dynamic `baseUrl` logic to handle seamless transitions between `localhost:3000` and Vercel production environments.
+* **State Management:** Utilized React `useEffect` and `useState` with cleanup functions to manage WebSocket channels and prevent memory leaks.
+
+##  Local Setup
+1. Clone the repository.
+2. Install dependencies: `npm install`.
+3. Set up your `.env.local` with your Supabase URL and Anon Key.
+4. Run the development server: `npm run dev`.
