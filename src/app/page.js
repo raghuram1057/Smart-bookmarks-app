@@ -17,32 +17,28 @@ export default async function Home() {
   }
 
   // 3. Server Action to handle Login
+  // 3. Server Action to handle Login
   async function handleLogin() {
-    'use server'
-    const supabase = await createClient()
-    
-    // Use http for local development on port 3004 to avoid SSL errors
-    const baseUrl = process.env.VERCEL_URL 
-      ? `http://${process.env.VERCEL_URL}` 
-      : 'http://localhost:3004'
+  'use server'
+  const supabase = await createClient()
+  
+  // Use a built-in Next.js check for the environment
+  const isProd = process.env.NODE_ENV === 'production'
+  
+  // Choose the base URL based on where the app is running
+  const baseUrl = isProd 
+    ? `https://smart-bookmarks-app-amber.vercel.app` // Use your actual live link
+    : 'http://localhost:3000'                      // Use your local port
 
-    const { data, error } = await supabase.auth.signInWithOAuth({
-      provider: 'google',
-      options: { 
-        redirectTo: `${baseUrl}/auth/callback` 
-      }
-    })
-
-    if (error) {
-      console.error('Auth error:', error.message)
-      return
+  const { data, error } = await supabase.auth.signInWithOAuth({
+    provider: 'google',
+    options: { 
+      redirectTo: `${baseUrl}/auth/callback` 
     }
+  })
 
-    if (data?.url) {
-      redirect(data.url)
-    }
-  }
-
+  if (data?.url) redirect(data.url)
+}
   // 4. Conditional Rendering based on Auth State
   if (!user) {
     return (
