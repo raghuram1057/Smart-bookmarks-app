@@ -2,7 +2,6 @@
 import { useEffect, useState } from 'react';
 import { createClient } from '@/utils/supabase/client';
 
-// UPDATE: Add onDeleteSuccess to the props
 export default function BookmarkList({ onDeleteSuccess }) {
   const supabase = createClient();
   const [bookmarks, setBookmarks] = useState([]);
@@ -38,12 +37,22 @@ export default function BookmarkList({ onDeleteSuccess }) {
   }, []);
 
   const deleteBookmark = async (id) => {
+    // 1. OPTIMISTIC UPDATE:
+    // Instantly filter out the deleted bookmark from the local state
+    const previousBookmarks = [...bookmarks]; // Keep a backup in case of error
+    setBookmarks(bookmarks.filter((bm) => bm.id !== id));
+
+    // 2. DATABASE DELETE:
     const { error } = await supabase.from('bookmarks').delete().eq('id', id);
     
     if (error) {
       console.error('Delete error:', error.message);
+      // If there is an error, restore the list from backup
+      setBookmarks(previousBookmarks);
+      alert("Failed to delete bookmark. Please try again.");
     } else {
-      // UPDATE: Call the refresh function passed from AuthenticatedHome
+      // 3. SUCCESS CALLBACK:
+      // Tell the parent component to sync up
       if (onDeleteSuccess) {
         onDeleteSuccess();
       }
@@ -66,7 +75,8 @@ export default function BookmarkList({ onDeleteSuccess }) {
           </div>
           <button
             onClick={() => deleteBookmark(bm.id)}
-            className="ml-4 text-gray-300 hover:text-red-500 transition-colors cursor-pointer disabled:cursor-not-allowed"
+            className="ml-4 text-gray-400 hover:text-red-600 transition-colors cursor-pointer p-2 hover:bg-red-50 rounded-lg"
+            title="Delete Bookmark"
           >
             <svg xmlns="http://www.w3.org/2000/svg" className="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor">
               <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" />
